@@ -96,7 +96,15 @@ def verify_email(emails, timeout=None, verify=True, debug=False):
     if not is_list(emails):
         emails = [emails]
 
-    loop = asyncio.new_event_loop()
+    # asyncio events doesn't fully support windows platform
+    # See: https://github.com/kakshay21/verify_email/issues/34#issuecomment-616971628
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+        
+    # https://www.cnblogs.com/SunshineKimi/p/12053914.html
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    loop = asyncio.get_event_loop()
 
     for email in emails:
         resp = loop.run_until_complete(_verify_email(email, timeout, verify))
